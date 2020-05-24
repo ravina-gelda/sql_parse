@@ -41,10 +41,33 @@ struct SimpleCondition {
     value: String
 
 }
+struct AndCondition<'a> {
+    left : &'a (dyn Condition + 'a),
+    right : &'a (dyn Condition + 'a)
+
+}
+struct Orcondition<'a> {
+    left : &'a (dyn Condition + 'a),
+    right : &'a (dyn Condition + 'a)
+
+}
+impl Condition for AndCondition<'_>{
+    fn  get_condition_type(&self) -> &str {
+        "and"
+    }
+
+}
+
 impl Condition for SimpleCondition{
     fn  get_condition_type(&self) -> &str {
         "simple"
     }
+}
+impl Condition for Orcondition<'_>{
+    fn  get_condition_type(&self) -> &str {
+        "or"
+    }
+
 }
 
 struct SelectAST<'a> {
