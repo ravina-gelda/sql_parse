@@ -1,4 +1,4 @@
-mod ast;
+mod sqlparser;
 fn main() {
     println!("Hello, world!");
 }
