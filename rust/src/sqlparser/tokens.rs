@@ -1,4 +1,8 @@
-pub enum Tokens{
+pub enum Token{
+    word,
+    space,
+    semicolon,
+
     
 }
 pub enum Step {
@@ -22,7 +26,7 @@ pub enum Step {
     updateValue,
     updateComma,
     deleteFromTable,
-    where,
+    stepWhere,
     whereField,
     whereOperator,
     whereValue,

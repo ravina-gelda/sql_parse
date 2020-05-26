@@ -32,6 +32,21 @@ pub struct Query{
     pub conditions: Vec<Condition>,
     //TODO: add necessary fields for the update and delete queries. 
     pub fields: Vec<String> ,
+    
+}
+impl Query {
+    pub fn new()->Query {
+        let mut q = Query{
+            query_type: QueryType::Unknown,
+            table: String::from(""),
+            conditions: vec![],
+            fields : vec![]
+
+        };
+        q
+
+    }
+
 }
 #[derive(PartialEq, Eq)]
 pub enum ErrorCode{
