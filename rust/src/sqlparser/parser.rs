@@ -1,11 +1,19 @@
 
 use super::ast;
+use super::tokens;
 trait Parser{
     //Trait/Interface for the parser. Given the 
     fn parse(&self, query : &str) -> (ast::Query, ast::ErrorCode);
 
 }
 struct SQLParser {
+    pub pos : i32,
+    pub sql : String,
+    pub step: tokens::Step,
+
+
+    
+
     
 }
 impl Parser for SQLParser {
@@ -27,7 +35,11 @@ mod parser_test{
     use super::*;
     fn test_simple_parse(){
         let query = "SELECT a FROM 'b'";
-        let p = SQLParser{};
+        let p = SQLParser{
+            pos: 1,
+            sql : String::from(""),
+            step: tokens::Step::stepType
+        };
         let (a , error) = p.parse(query);
 
 
