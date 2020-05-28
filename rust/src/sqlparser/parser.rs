@@ -19,6 +19,7 @@ struct SQLParser {
     pub step: tokens::Step,
     pub query : ast::Query,
     pub error : ast::ErrorCode,
+    pub reserved_keywords : Vec<String>
 
 }
 impl SQLParser {
@@ -29,23 +30,23 @@ impl SQLParser {
             step: tokens::Step::stepType,
             query: ast::Query::new(), 
             error: ast::ErrorCode::None,
-            // reserved_keywords : vec![String::from("("),
-            // String::from( ")")
-            // ,String::from( ">=")
-            // ,String::from( "<=")
-            // ,String::from( "!=")
-            // ,String::from( ",")
-            // ,String::from( "=")
-            // ,String::from(">")
-            // ,String::from( "<")
-            // ,String::from( "SELECT")
-            // ,String::from( "INSERT")
-            // ,String::from( "VALUES")
-            // ,String::from( "UPDATE")
-            // ,String::from("DELETE FROM")
-            // ,String::from( "WHERE")
-            // ,String::from( "FROM")
-            // ,String::from( "SET")]
+            reserved_keywords : vec![String::from("("),
+            String::from( ")")
+            ,String::from( ">=")
+            ,String::from( "<=")
+            ,String::from( "!=")
+            ,String::from( ",")
+            ,String::from( "=")
+            ,String::from(">")
+            ,String::from( "<")
+            ,String::from( "SELECT")
+            ,String::from( "INSERT")
+            ,String::from( "VALUES")
+            ,String::from( "UPDATE")
+            ,String::from("DELETE FROM")
+            ,String::from( "WHERE")
+            ,String::from( "FROM")
+            ,String::from( "SET")]
         };
         p
     } 
@@ -128,10 +129,7 @@ impl SQLParser {
     
     
     fn tokenize_single_quoted_string(&self, chars: &mut Peekable<Chars<'_>>) -> String {
-        //TODO: handle escaped quotes in string
-        //TODO: handle newlines in string
-        //TODO: handle EOF before terminating quote
-        //TODO: handle 'string' <white space> 'string continuation'
+        
         let mut s = String::new();
         chars.next(); // consume the opening quote
         while let Some(&ch) = chars.peek() {
@@ -154,15 +152,75 @@ impl SQLParser {
         }
         s
     }
+    fn is_identifier_or_asterix(&self, token:&String)->bool {
+        return self.is_identifier(token) || String::from("*").eq_ignore_ascii_case(&token[..]) ;
+    }
+    fn is_identifier(&self, token:&String)-> bool {
+        //TODO figure out how to handle case here. 
+        for u in self.reserved_keywords.iter(){
+            if u == token {
+                return true;
+            }
+        }
+        false
+            
+
+    }
 
 }
 impl Parser for SQLParser {
     fn parse(&self, query: &str) -> (ast::Query, ast:: ErrorCode) {
-        let q = ast::Query::new();
+        let mut q = ast::Query::new();
+        let tokens = self.get_tokens(String::from(query));
+        if !tokens.is_ok() {
+            return (q, ast::ErrorCode::TokenizationError)
+
+        } 
+        let  mut step: tokens::Step = tokens::Step::stepType;
+
+        for token in tokens.unwrap_or(vec![]).iter().peekable(){
+            match step {
+                tokens::Step::stepType => {
+                    if String::from("SELECT").eq_ignore_ascii_case(&token[..]) {
+                        // we received a select as the first state . WE change the query type to select and proceed to the next state. 
+                        q.query_type = ast::QueryType::SELECT;
+                        step = tokens::Step::selectField;
+                    }
+                    else if String::from("INSERT").eq_ignore_ascii_case(&token[..]) {
+                        // here we validate whether the next token is indeed from 
+                        step = tokens::Step::validateInto;
+                    }
+                    else if String::from("DELETE").eq_ignore_ascii_case(&token[..]) {
+                        step = tokens::Step::validateFrom;
+                    }
+                    else {
+                        return (q,ast::ErrorCode::ParseError)
+                    }
+
+                    
+                }
+                tokens::Step::selectField => {
+                    if !self.is_identifier_or_asterix(token){
+                        return (q,ast::ErrorCode::ParseError);
+                    }
+
+
+                }
+                _ => {
+                    return (q, ast::ErrorCode::ParseError);
+
+                }
+
+            }
+            
+
+        }
+
         return (q, ast::ErrorCode::None)
         
 
     }
+    
     
 }
 impl  SQLParser{

@@ -1,6 +1,6 @@
 pub enum QueryType{
     Unknown,
-    Select, 
+    SELECT, 
     Update, 
     Insert,
     Delete
@@ -50,7 +50,9 @@ impl Query {
 }
 #[derive(PartialEq, Eq)]
 pub enum ErrorCode{
-    None
+    None,
+    TokenizationError,
+    ParseError,
 }
 
 
