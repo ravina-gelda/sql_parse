@@ -9,7 +9,7 @@ import (
 
    // "log"
 )
-type parser struct {
+type tokenizer struct {
 	i               int
 	sql             string
 	//step            step
@@ -21,12 +21,12 @@ var reservedWords = []string{
 	"(", ")", ">=", "<=", "!=", ",", "=", ">", "<", "SELECT", "INSERT INTO", "VALUES", "UPDATE", "DELETE FROM",
 	"WHERE", "FROM", "SET",
 }
-func (p *parser) peek() string {
+func (p *tokenizer) peek() string {
 	peeked, _ := p.peekWithLength()
 	return peeked
 }
 
-func (p *parser) pop() []string {
+func (p *tokenizer) pop() []string {
     fmt.Println(p.sql)
     var newarr []string
     for{
@@ -45,12 +45,12 @@ func (p *parser) pop() []string {
 }
 
 
-func (p *parser) popWhitespace() {
+func (p *tokenizer) popWhitespace() {
 	for ; p.i < len(p.sql) && p.sql[p.i] == ' '; p.i++ {
 	}
 }
 
-func (p *parser) peekWithLength() (string, int) {
+func (p *tokenizer) peekWithLength() (string, int) {
 	if p.i >= len(p.sql) {
 		return "", 0
 	}
@@ -66,7 +66,7 @@ func (p *parser) peekWithLength() (string, int) {
 	return p.peekIdentifierWithLength()
 }
 
-func (p *parser) peekQuotedStringWithLength() (string, int) {
+func (p *tokenizer) peekQuotedStringWithLength() (string, int) {
 	if len(p.sql) < p.i || p.sql[p.i] != '\'' {
 		return "", 0
 	}
@@ -78,7 +78,7 @@ func (p *parser) peekQuotedStringWithLength() (string, int) {
 	return "", 0
 }
 
-func (p *parser) peekIdentifierWithLength() (string, int) {
+func (p *tokenizer) peekIdentifierWithLength() (string, int) {
 	for i := p.i; i < len(p.sql); i++ {
 		if matched, _ := regexp.MatchString(`[a-zA-Z0-9_*]`, string(p.sql[i])); !matched {
 			return p.sql[p.i:i], len(p.sql[p.i:i])
@@ -97,6 +97,6 @@ func main() {
     fmt.Println(strings.TrimSpace(sql))
 //parser{0, strings.TrimSpace(sql), stepType, query.Query{}, nil, ""}
     // var newarr []string
-    var newarr []string = (&parser{0, strings.TrimSpace(sql), nil}).pop()
+    var newarr []string = (&tokenizer{0, strings.TrimSpace(sql), nil}).pop()
     fmt.Printf("%v", newarr)
 }
