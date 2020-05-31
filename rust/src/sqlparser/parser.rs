@@ -205,7 +205,7 @@ impl SQLParser {
     fn is_identifier(&self, token:&String)-> bool {
         //TODO figure out how to handle case here. 
         for u in self.reserved_keywords.iter(){
-            if u == token {
+            if String::from(u).eq_ignore_ascii_case(token) {
                 return true;
             }
         }
@@ -219,6 +219,7 @@ impl Parser for SQLParser {
     fn parse(&self, query: &str) -> (ast::Query, ast:: ErrorCode) {
         let mut q = ast::Query::new();
         let tokens = self.get_tokens(String::from(query));
+        let mut updateNextField : &str = ""; 
         if !tokens.is_ok() {
             return (q, ast::ErrorCode::TokenizationError)
 
@@ -233,15 +234,19 @@ impl Parser for SQLParser {
                         q.query_type = ast::QueryType::SELECT;
                         step = tokens::Step::selectField;
                     }
-                    else if String::from("INSERT").eq_ignore_ascii_case(&token[..]) {
+                    else if String::from("INSERT INTO").eq_ignore_ascii_case(&token[..]) {
                         // here we validate whether the next token is indeed from 
-                        step = tokens::Step::validateInto;
+                        q.query_type = ast::QueryType::INSERT;
+                        step = tokens::Step::insertTable;
                     }
-                    else if String::from("DELETE").eq_ignore_ascii_case(&token[..]) {
-                        step = tokens::Step::validateFrom;
+                    else if String::from("DELETE FROM").eq_ignore_ascii_case(&token[..]) {
+                        q.query_type = ast::QueryType::DELETE;
+                        step = tokens::Step::deleteFromTable;
                     }
                     else if String::from("UPDATE").eq_ignore_ascii_case(&token[..]) {
                         q.query_type = ast::QueryType::UPDATE;
+                        step = tokens::Step::deleteFromTable;
+                    
                         //TODO: add metadata for a select query to the query struct
 
                     }
@@ -255,14 +260,255 @@ impl Parser for SQLParser {
                     if !self.is_identifier_or_asterix(token){
                         return (q,ast::ErrorCode::ParseError);
                     }
+                    q.fields.push(String::from(&token[..]));
+                    step = tokens::Step::validateSelectFromOrComma;
+
 
 
                 }
-                _ => {
-                    return (q, ast::ErrorCode::ParseError);
+                tokens::Step::validateSelectFromOrComma => {
+                    if String::from(",").eq_ignore_ascii_case(&token[..]){
+                        step = tokens::Step::selectField;
+
+                    }
+                    else if String::from("FROM").eq_ignore_ascii_case(&token[..]) {
+                        step = tokens::Step::selectFromTable;
+                        continue;
+                    
+                    }
+                    else {
+                        //TODO: return proper error
+                        return (q, ast::ErrorCode::ParseError)
+                    }
+                
+                }
+                tokens::Step::selectFromTable => {
+                    if token.len() == 0{
+                        //TODO: return proper error
+                        return (q, ast::ErrorCode::ParseError);
+
+                    }
+                    q.table = String::from(token);
+                    step = tokens::Step::stepWhere;
+                }
+                tokens::Step::insertTable => {
+                    if token.len() == 0 {
+                        //TODO: throw  proper error
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    q.table = String::from(token);
+                    step = tokens::Step::insertFieldsOpeningParens;
+                }
+                tokens::Step::deleteFromTable =>{
+                    if token.len() == 0 {
+                        //TODO: throw  proper error
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    q.table = String::from(token);
+                    step = tokens::Step::whereField;
 
                 }
+                tokens::Step::updateTable => {
+                    if token.len() == 0 {
+                     //TODO: throw  proper error
+                     return (q, ast::ErrorCode::ParseError);
+                    }
+                    q.table = String::from(token);
+                    step = tokens::Step::updateSet;
+                }
+                tokens::Step::updateSet => {
+                    if ! String::from("SET").eq_ignore_ascii_case(&token[..]) {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    step = tokens::Step::updateField;
+                }
+                tokens::Step::updateField =>{
+                    if ! self.is_identifier(token){
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    updateNextField = &token[..];
+                    step = tokens::Step::updateEquals;
 
+                }
+                tokens::Step::updateEquals => {
+                    if ! String::from("=").eq_ignore_ascii_case(&token[..]){
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    step = tokens::Step::updateValue;
+                }
+                
+                tokens::Step::updateValue =>{
+                    if token.len() == 0 {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    //TODO: add update fields 
+                    q.update_fields.insert(String::from(updateNextField),String::from(token));
+                    updateNextField = "";
+                    step = tokens::Step::validateUpdateCommaOrWhere;
+                }
+                tokens::Step::validateUpdateCommaOrWhere => {
+                    if String::from("WHERE").eq_ignore_ascii_case(&token[..]){
+                        step = tokens::Step::whereField;
+                        continue;
+                    }
+                    else if String::from(",").eq_ignore_ascii_case(&token[..]){
+                        step = tokens::Step::updateField;
+                        continue;
+                    }
+                    else {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+
+                    }
+                }
+                tokens::Step::stepWhere  => {
+                    if !String::from("WHERE").eq_ignore_ascii_case(&token[..]){
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    step = tokens::Step::whereField;
+                }
+                tokens::Step::whereField =>{
+                    if !self.is_identifier(token){
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    let mut c = ast::Condition::new();
+                    c.operand1 = String::from(&token[..]);
+                    q.conditions.push(c);
+                    step = tokens::Step::whereOperator;
+                }
+                tokens::Step::whereOperator =>{
+                    let mut c = q.conditions.pop().unwrap();
+                    if String::from("=").eq_ignore_ascii_case(&token[..]) {
+                        c.operator = ast::Operator::eq;
+                    }
+                    else if String::from(">").eq_ignore_ascii_case(&token[..]){
+                        c.operator = ast::Operator::gt;
+                    }
+                    else if String::from(">=").eq_ignore_ascii_case(&token[..]){
+                        c.operator = ast::Operator::gte;
+
+                    }
+                    else if String::from("<").eq_ignore_ascii_case(&token[..]){
+                        c.operator = ast::Operator::lt;
+                    }
+                    else if String::from("<=").eq_ignore_ascii_case(&token[..]){
+                        c.operator = ast::Operator::lte;
+
+                    }
+                    else if String::from("!=").eq_ignore_ascii_case(&token[..]){
+                        c.operator = ast::Operator::ne;
+
+                    }
+                    else {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    q.conditions.push(c);
+                    step = tokens::Step::whereValue;
+                }
+                tokens::Step::whereValue  => {
+                    if token.len() == 0 {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    let mut c = q.conditions.pop().unwrap();
+                    c.operand2 = String::from(&token[..]);
+                    c.operand_2_is_field = false;
+                    step = tokens::Step::whereAnd;
+
+                }
+                tokens::Step::whereAnd =>{
+                    if  ! String::from("AND").eq_ignore_ascii_case("AND"){
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    
+                    }
+                    step = tokens::Step::whereField;
+                }
+                tokens::Step::insertFieldsOpeningParens =>{
+                    if token.len() != 1 && String::from("(").eq_ignore_ascii_case(&token[..]) {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    step = tokens::Step::insertFields;
+                }
+                tokens::Step::insertFields =>{
+                    if ! self.is_identifier(token){
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    q.fields.push(String::from(token));
+                    step = tokens::Step::insertFieldsCommaOrClosingParens;
+
+                }
+                tokens::Step::insertFieldsCommaOrClosingParens =>{
+                    if token != "," && token != ")" {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    if token == ","{
+                        step = tokens::Step::insertFields;
+                        continue;
+                    }
+                    step = tokens::Step::insertValuesRWord;
+                }
+                tokens::Step::insertValuesRWord =>{
+                    if ! String::from("VALUES").eq_ignore_ascii_case(&token[..]){
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+
+                    }
+                    step = tokens::Step::insertValuesOpeningParens;
+                }
+                tokens::Step::insertValuesOpeningParens =>{
+                    if token != "(" {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    q.insert_fields.push(Vec::new());
+                    step = tokens::Step::insertValues;
+                }
+                tokens::Step::insertValues =>{
+                    if token.len() == 0 {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);
+                    }
+                    let mut lval = q.insert_fields.pop().unwrap();
+                    lval.push(String::from(token));
+                    q.insert_fields.push(lval);
+                    step = tokens::Step::insertValuesCommaOrClosingParens;
+                }
+                tokens::Step::insertValuesCommaOrClosingParens =>{
+                    if token != "," && token != ")" {
+                         //TODO: throw proper error code
+                         return (q, ast::ErrorCode::ParseError);
+                    }
+                    if token == "," {
+                        step = tokens::Step::insertValues;
+                        continue;
+                    }
+                    let last = q.insert_fields.pop().unwrap();
+                    if last.len() < q.fields.len(){
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);                        
+                    }
+
+                    step = tokens::Step::insertValuesCommaBeforeOpeningParens;
+                }
+                tokens::Step::insertValuesCommaBeforeOpeningParens =>{
+                    if token != "," {
+                        //TODO: throw proper error code
+                        return (q, ast::ErrorCode::ParseError);   
+                    }
+                    step = tokens::Step::insertValuesOpeningParens;
+                }
+                
             }
             
 
