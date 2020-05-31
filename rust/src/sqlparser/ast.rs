@@ -1,7 +1,7 @@
 pub enum QueryType{
     Unknown,
     SELECT, 
-    Update, 
+    UPDATE, 
     Insert,
     Delete
 }
@@ -30,7 +30,7 @@ pub struct Query{
     pub query_type : QueryType,
     pub table: String,
     pub conditions: Vec<Condition>,
-    //TODO: add necessary fields for the update and delete queries. 
+    //TODO: add necessary fields for the UPDATE and delete queries. 
     pub fields: Vec<String> ,
     
 }

@@ -40,7 +40,7 @@ impl SQLParser {
             ,String::from(">")
             ,String::from( "<")
             ,String::from( "SELECT")
-            ,String::from( "INSERT")
+            ,String::from( "INSERT INTO")
             ,String::from( "VALUES")
             ,String::from( "UPDATE")
             ,String::from("DELETE FROM")
@@ -61,6 +61,16 @@ impl SQLParser {
     }
     fn next_token(&self,chars: &mut Peekable<Chars<'_>>) -> Result<Option<String>,TokenizerError> {
         let s = String::new();
+        let (t , present)  = self.get_token_if_present(chars);
+        if present {
+            let mut c = 0;
+            while c < t.len(){
+                chars.next();
+                c = c+1;
+            }
+            self.remove_spaces(chars);
+            return Ok(Some(t))
+        }
         match chars.peek() {
             Some(&ch)  => match ch {
                 '\'' => self.get_quoted_string(chars),
@@ -70,6 +80,32 @@ impl SQLParser {
 
         }
         
+    }
+    fn get_token_if_present(&self, chars: &mut Peekable<Chars<'_>>) -> (String , bool) {
+        let absent = String::new();
+        for token in self.reserved_keywords.iter(){
+            let token_str = String::from(token);
+            let count = 0;
+            let mut copy = chars.clone();
+            let mut s = String::new();
+            let mut c = 0;
+            while let Some(&ch) = copy.peek()  {
+                c+=1;
+                copy.next();
+                s.push(ch);
+
+                if c >= token_str.len(){
+                    break;
+                }
+            }
+            if s.eq_ignore_ascii_case(&token_str){
+                return (token_str, true)
+
+            }
+        
+        }
+        return (absent, false)
+
     }
     fn get_quoted_string(&self,chars:&mut Peekable<Chars<'_>>)->Result<Option<String>,TokenizerError>{
         let mut s = String::new();
@@ -86,6 +122,7 @@ impl SQLParser {
                         break;
                     }
                 }
+
                 _ => {
                     chars.next(); // consume
                     s.push(ch);
@@ -113,9 +150,19 @@ impl SQLParser {
         let mut s = String::new();
         while let Some(&ch) = chars.peek() {
             match ch {
-                ' ' | '\n' | '\t'  => {
+                ' ' | '\n' | '\t'   => {
                     chars.next(); //consume
                     break;
+                }
+                ',' | ')' | ']'  => {
+                    if s.len() >0 {
+                        break;
+                    }
+                    else {
+                        chars.next();
+                        s.push(ch);
+                        break;
+                    }
                 }
                 _ => {
                     chars.next();
@@ -123,7 +170,7 @@ impl SQLParser {
                 } 
             }
         }
-
+        self.remove_spaces(chars);
         Ok(Some(s))   
     }
     
@@ -193,6 +240,11 @@ impl Parser for SQLParser {
                     else if String::from("DELETE").eq_ignore_ascii_case(&token[..]) {
                         step = tokens::Step::validateFrom;
                     }
+                    else if String::from("UPDATE").eq_ignore_ascii_case(&token[..]) {
+                        q.query_type = ast::QueryType::UPDATE;
+                        //TODO: add metadata for a select query to the query struct
+
+                    }
                     else {
                         return (q,ast::ErrorCode::ParseError)
                     }
@@ -229,15 +281,14 @@ impl  SQLParser{
 #[cfg(test)]
 mod parser_test{
     use super::*;
-
     fn test_simple_parse(){
-        let query = "SELECT a FROM 'b'";
+        let query = "SELECT a, b FROM 'b'";
         let p = SQLParser::new();
         let (a , error) = p.parse(query);
 
 
         assert_eq!(a.table, "b");
-        assert_eq!(a.fields, vec!["a"]);
+        assert_eq!(a.fields, vec!["a", "b"]);
         assert!(error == ast::ErrorCode::None);
         assert!(String::from(query).starts_with("SELECT a"));
     }
@@ -246,6 +297,23 @@ mod parser_test{
     let p = SQLParser::new();
     let t = p.get_tokens(String::from("SELECT * FROM \'A and B\'")).unwrap_or(vec![]);
     let expected = vec!["SELECT","*", "FROM", "A and B"] ;
+
+    assert_eq![t,expected ];
+    }
+    #[test]
+    fn test_tokenize_simple_again(){
+    let p = SQLParser::new();
+    let t = p.get_tokens(String::from("SELECT a, b, c FROM \'A and B\'")).unwrap_or(vec![]);
+    let expected = vec!["SELECT","a", ",","b", ",", "c", "FROM", "A and B"] ;
+
+    assert_eq![t,expected ];
+    }
+    #[test]
+    fn test_tokenize_simple_insert(){
+    let p = SQLParser::new();
+    
+    let t = p.get_tokens(String::from("Insert into b values (2, 4)")).unwrap_or(vec![]);
+    let expected = vec!["INSERT INTO","b", "VALUES","(", "2", ",", "4", ")"] ;
 
     assert_eq![t,expected ];
     }
