@@ -32,9 +32,9 @@ func (p *Parser) parse() (query.Query, error) {
 
 func (arr *Parser) peek() (string) {
     //&Parser{Tokens,0, stepType, query.Query{}, nil, "",strings.TrimSpace(sql)}
-    fmt.Println("peeked")
-    fmt.Println(arr.Tokens[arr.i])
-    fmt.Println(arr.i)
+    //fmt.Println("peeked")
+    //fmt.Println(arr.Tokens[arr.i])
+    //fmt.Println(arr.i)
     return arr.Tokens[arr.i]
 }
 
@@ -43,9 +43,9 @@ func (arr *Parser) pop() (string) {
     popped:= arr.Tokens[arr.i]
     arr.i=arr.i+1
     arr.sql_index= arr.sql_index+len(popped)
-    fmt.Println("popped")
-    fmt.Println(popped)
-    fmt.Println(arr.i)
+    //fmt.Println("popped")
+    //fmt.Println(popped)
+    //fmt.Println(arr.i)
     return popped
 }
 //func (arr *Parser ) copy_tokenarr( token_arr []string ) {
@@ -95,9 +95,9 @@ const (
 
 
 func (p *Parser) doParse() (query.Query, error) {
-    fmt.Println(p.i)
-    fmt.Println(p.Tokens)
-    fmt.Println(p.sql)
+    //fmt.Println(p.i)
+    //fmt.Println(p.Tokens)
+    //fmt.Println(p.sql)
 	for {
 		if p.i >= len(p.Tokens) {
 			return p.query, p.err
@@ -110,9 +110,9 @@ func (p *Parser) doParse() (query.Query, error) {
 			switch strings.ToUpper(p.peek()) {
 			case "SELECT":
 				p.query.Type = query.Select
-                fmt.Println(p.i)
+                //fmt.Println(p.i)
 				p.pop()
-                fmt.Println(p.i)
+                //fmt.Println(p.i)
 				p.step = stepSelectField
 			case "INSERT INTO":
 				p.query.Type = query.Insert
@@ -158,9 +158,9 @@ func (p *Parser) doParse() (query.Query, error) {
 			p.pop()
 			p.step = stepSelectFromTable
 		case stepSelectFromTable:
-            fmt.Println("tttttt")
-            fmt.Println(p.i)
-            fmt.Println(p.peek())
+            //fmt.Println("tttttt")
+            //fmt.Println(p.i)
+            //fmt.Println(p.peek())
 			tableName := p.peek()
 			if len(tableName) == 0 {
 				return p.query, fmt.Errorf("at SELECT: expected quoted table name")
@@ -219,7 +219,7 @@ func (p *Parser) doParse() (query.Query, error) {
             //quotedValue, ln := peekQuoted(p.sql,p.sql_index)
             quotedValue := p.peek()
             ln :=len(quotedValue)
-            fmt.Println(quotedValue)
+            //fmt.Println(quotedValue)
 			if ln == 0 {
 				return p.query, fmt.Errorf("at UPDATE: expected quoted value")
 			}
@@ -280,10 +280,10 @@ func (p *Parser) doParse() (query.Query, error) {
 			//quotedValue, ln := peekQuoted(p.sql,p.sql_index)
              quotedValue := p.peek()
             ln :=len(quotedValue)
-            fmt.Println(ln)
-            fmt.Println(p.sql)
+            //fmt.Println(ln)
+            //fmt.Println(p.sql)
             
-            fmt.Println(p.sql_index)
+            //fmt.Println(p.sql_index)
 			if ln == 0 {
 				return p.query, fmt.Errorf("at WHERE: expected quoted value")
 			}
