@@ -1,3 +1,9 @@
+
+# excution detail
+## Downlod the folder
+## Copy the contents of new_sql_parser folder in your go path in the system
+## go run parser.go
+## to change sql query just change the sql variable in the main function in parser.go
 # sql_parse
 ## Examples of DML commands  in SQL Server are
 * SELECT – This SQL DML command select records or data from a table
