@@ -2,7 +2,7 @@
 pub use self::ast::*;
 pub use self::parser::*;
 pub use self::tokens::*;
-mod ast;
-mod parser;
-mod tokens;
-mod parser_tests;
+pub mod ast;
+pub mod parser;
+pub mod tokens;
+pub mod parser_tests;
