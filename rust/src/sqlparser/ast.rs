@@ -1,3 +1,4 @@
+#[derive(PartialEq, Eq)]
 pub enum QueryType{
     Unknown,
     SELECT, 
@@ -5,6 +6,7 @@ pub enum QueryType{
     INSERT,
     DELETE
 }
+#[derive(PartialEq, Eq)]
 pub enum Operator {
     unknown,
     eq,
@@ -13,16 +15,14 @@ pub enum Operator {
     lt,
     gte,
     lte,
-
 }
-
+#[derive(PartialEq, Eq)]
 pub struct Condition {
     pub operand1: String,
     pub operator:  Operator,
     pub operand2: String,
     pub operand_1_is_field : bool,
     pub operand_2_is_field : bool
-
 
 }
 impl Condition {
@@ -31,16 +31,14 @@ impl Condition {
             operand1: String::new(),
             operator: Operator::unknown,
             operand2: String::new(),
-            operand_1_is_field: false,
+            operand_1_is_field: true,
             operand_2_is_field: false,
          };
         return c;
     }
-
-
 }
+#[derive(PartialEq, Eq)] 
 pub struct Query{
-
     pub query_type : QueryType,
     pub table: String,
     pub conditions: Vec<Condition>,
@@ -59,12 +57,9 @@ impl Query {
             fields : vec![], 
             update_fields : std::collections::HashMap::new(),
             insert_fields : vec![]
-
         };
         q
-
     }
-
 }
 #[derive(PartialEq, Eq)]
 pub enum ErrorCode{
@@ -72,7 +67,3 @@ pub enum ErrorCode{
     TokenizationError,
     ParseError,
 }
-
-
-
-
