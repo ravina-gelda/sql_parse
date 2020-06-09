@@ -37,7 +37,6 @@ impl Parser for SQLParser {
         } 
         let  mut step: tokens::Step = tokens::Step::stepType;
         for token in tokens.unwrap_or(vec![]).iter().peekable(){
-            println!["{}", token];
             match step {
                 tokens::Step::stepType => {
                     if String::from("SELECT").eq_ignore_ascii_case(&token[..]) {
@@ -56,7 +55,7 @@ impl Parser for SQLParser {
                     }
                     else if String::from("UPDATE").eq_ignore_ascii_case(&token[..]) {
                         q.query_type = ast::QueryType::UPDATE;
-                        step = tokens::Step::deleteFromTable;
+                        step = tokens::Step::updateTable;
                     
                         //TODO: add metadata for a select query to the query struct
 
@@ -110,7 +109,7 @@ impl Parser for SQLParser {
                         return (q, ast::ErrorCode::ParseError);
                     }
                     q.table = String::from(token);
-                    step = tokens::Step::whereField;
+                    step = tokens::Step::stepWhere;
                 }
                 tokens::Step::updateTable => {
                     if token.len() == 0 {
