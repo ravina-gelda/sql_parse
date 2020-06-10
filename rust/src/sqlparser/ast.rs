@@ -1,3 +1,4 @@
+use std::fmt;
 #[derive(PartialEq, Eq)]
 pub enum QueryType{
     Unknown,
@@ -67,4 +68,14 @@ pub enum ErrorCode{
     TokenizationError(String),
     ParseError(String)
 
+}
+impl fmt::Debug for ErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &*self {
+            ErrorCode::ParseError(s) => write!(f, "ParseError  {}", s),
+            ErrorCode::TokenizationError(s) => write!(f, "TokenizationError  {}", s),
+            ErrorCode::None => write!(f, "None",)
+
+        }
+    }
 }

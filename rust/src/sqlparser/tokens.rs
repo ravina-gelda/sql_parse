@@ -7,6 +7,8 @@ pub enum Token{
     space,
     semicolon,    
 }
+#[derive(PartialEq, Eq)]
+
 pub enum Step {
     stepType,
     selectField,
@@ -61,7 +63,7 @@ impl Tokenizer {
     }
     pub fn get_tokens(&self, query: String) -> Result<Vec<String>, TokenizerError> {
         let mut tokens = Vec::new();
-        let mut peekable = query.chars().peekable();
+        let mut peekable = query.trim().chars().peekable();
         while let Some(token) = self.next_token(&mut peekable)? {
             tokens.push(token);
         }
