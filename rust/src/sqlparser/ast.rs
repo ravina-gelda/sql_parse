@@ -64,6 +64,7 @@ impl Query {
 #[derive(PartialEq, Eq)]
 pub enum ErrorCode{
     None,
-    TokenizationError,
-    ParseError,
+    TokenizationError(String),
+    ParseError(String)
+
 }

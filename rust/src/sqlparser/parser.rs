@@ -33,7 +33,7 @@ impl Parser for SQLParser {
         let tokens = tokenizer.get_tokens(String::from(query));
         let mut updateNextField : &str = ""; 
         if !tokens.is_ok() {
-            return (q, ast::ErrorCode::TokenizationError)
+            return (q, ast::ErrorCode::TokenizationError(String::from("Unable to parse input query")))
         } 
         let  mut step: tokens::Step = tokens::Step::stepType;
         for token in tokens.unwrap_or(vec![]).iter().peekable(){
@@ -61,13 +61,16 @@ impl Parser for SQLParser {
 
                     }
                     else {
-                        return (q,ast::ErrorCode::ParseError)
+                        return (q,ast::ErrorCode::ParseError(String::from("Invalid query type")))
+
+                    
                     }
                     
                 }
                 tokens::Step::selectField => {
                     if !tokenizer.is_identifier_or_asterix(token){
-                        return (q,ast::ErrorCode::ParseError);
+                        return (q,ast::ErrorCode::ParseError
+                        (String::from("at SELECT: expected field to select")));
                     }
                     q.fields.push(String::from(&token[..]));
                     step = tokens::Step::validateSelectFromOrComma;
@@ -83,14 +86,18 @@ impl Parser for SQLParser {
                     }
                     else {
                         //TODO: return proper error
-                        return (q, ast::ErrorCode::ParseError)
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at SELECT expected FROM or a comma after the field")));
                     }
                 
                 }
                 tokens::Step::selectFromTable => {
                     if token.len() == 0{
                         //TODO: return proper error
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at SELECT: expected quoted table name")
+                        )
+                        );
                     }
                     q.table = String::from(token);
                     step = tokens::Step::stepWhere;
@@ -98,7 +105,9 @@ impl Parser for SQLParser {
                 tokens::Step::insertTable => {
                     if token.len() == 0 {
                         //TODO: throw  proper error
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at INSERT INTO: expected quoted table name")
+                        ));
                     }
                     q.table = String::from(token);
                     step = tokens::Step::insertFieldsOpeningParens;
@@ -106,7 +115,9 @@ impl Parser for SQLParser {
                 tokens::Step::deleteFromTable =>{
                     if token.len() == 0 {
                         //TODO: throw  proper error
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at DELETE FROM: expected quoted table name")
+                        ));
                     }
                     q.table = String::from(token);
                     step = tokens::Step::stepWhere;
@@ -114,7 +125,10 @@ impl Parser for SQLParser {
                 tokens::Step::updateTable => {
                     if token.len() == 0 {
                      //TODO: throw  proper error
-                     return (q, ast::ErrorCode::ParseError);
+                     return (q, ast::ErrorCode::ParseError(
+                         String::from("at UPDATE: expected quoted table name")
+                     )
+                    );
                     }
                     q.table = String::from(token);
                     step = tokens::Step::updateSet;
@@ -122,14 +136,18 @@ impl Parser for SQLParser {
                 tokens::Step::updateSet => {
                     if ! String::from("SET").eq_ignore_ascii_case(&token[..]) {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at UPDATE: expected 'SET'")
+                        ));
                     }
                     step = tokens::Step::updateField;
                 }
                 tokens::Step::updateField =>{
                     if ! tokenizer.is_identifier(token){
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("At UPDATE: expected atleast one field to update")
+                        ));
                     }
                     updateNextField = &token[..];
                     step = tokens::Step::updateEquals;
@@ -137,7 +155,10 @@ impl Parser for SQLParser {
                 tokens::Step::updateEquals => {
                     if ! String::from("=").eq_ignore_ascii_case(&token[..]){
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at UPDATE: expected '='")
+                        )
+                        );
                     }
                     step = tokens::Step::updateValue;
                 }
@@ -145,7 +166,10 @@ impl Parser for SQLParser {
                 tokens::Step::updateValue =>{
                     if token.len() == 0 {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at UPDATE: expected quoted value")
+                        )
+                        );
                     }
                     //TODO: add update fields 
                     q.update_fields.insert(String::from(updateNextField),String::from(token));
@@ -163,20 +187,29 @@ impl Parser for SQLParser {
                     }
                     else {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at UPDATE: expected , or WHERE")
+                        )
+                        );
                     }
                 }
                 tokens::Step::stepWhere  => {
                     if !String::from("WHERE").eq_ignore_ascii_case(&token[..]){
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("expected WHERE")
+                        )
+                        );
                     }
                     step = tokens::Step::whereField;
                 }
                 tokens::Step::whereField =>{
                     if !tokenizer.is_identifier(token){
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at WHERE: expected field")
+                        )
+                        );
                     }
                     let mut c = ast::Condition::new();
                     c.operand1 = String::from(&token[..]);
@@ -205,7 +238,9 @@ impl Parser for SQLParser {
                     }
                     else {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at WHERE: unknown operator")
+                        ));
                     }
                     q.conditions.push(c);
                     step = tokens::Step::whereValue;
@@ -213,7 +248,10 @@ impl Parser for SQLParser {
                 tokens::Step::whereValue  => {
                     if token.len() == 0 {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at WHERE: expected quoted value")
+                        )
+                        );
                     }
                     let mut c = q.conditions.pop().unwrap();
                     c.operand2 = String::from(&token[..]);
@@ -222,9 +260,11 @@ impl Parser for SQLParser {
                     step = tokens::Step::whereAnd;
                 }
                 tokens::Step::whereAnd =>{
-                    if  ! String::from("AND").eq_ignore_ascii_case("AND"){
+                    if  ! String::from("AND").eq_ignore_ascii_case(token){
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("expected AND")
+                        ));
                     
                     }
                     step = tokens::Step::whereField;
@@ -232,14 +272,20 @@ impl Parser for SQLParser {
                 tokens::Step::insertFieldsOpeningParens =>{
                     if token.len() != 1 && String::from("(").eq_ignore_ascii_case(&token[..]) {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at INSERt INTO: expected (")
+
+                        ));
                     }
                     step = tokens::Step::insertFields;
                 }
                 tokens::Step::insertFields =>{
                     if ! tokenizer.is_identifier(token){
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at INSERT INTO: expected at least one field to insert")
+                        )
+                        );
                     }
                     q.fields.push(String::from(token));
                     step = tokens::Step::insertFieldsCommaOrClosingParens;
@@ -247,7 +293,10 @@ impl Parser for SQLParser {
                 tokens::Step::insertFieldsCommaOrClosingParens =>{
                     if token != "," && token != ")" {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at INSERT INTO: expected comma or closing parens")
+                        )
+                        );
                     }
                     if token == ","{
                         step = tokens::Step::insertFields;
@@ -258,14 +307,18 @@ impl Parser for SQLParser {
                 tokens::Step::insertValuesRWord =>{
                     if ! String::from("VALUES").eq_ignore_ascii_case(&token[..]){
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at INSERT INTO: expected 'VALUES' ")
+                        ));
                     }
                     step = tokens::Step::insertValuesOpeningParens;
                 }
                 tokens::Step::insertValuesOpeningParens =>{
                     if token != "(" {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at INSERT INTO: expected opening parens")
+                        ));
                     }
                     q.insert_fields.push(Vec::new());
                     step = tokens::Step::insertValues;
@@ -273,7 +326,9 @@ impl Parser for SQLParser {
                 tokens::Step::insertValues =>{
                     if token.len() == 0 {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at INSERT INTO: expected quoted value")
+                        ));
                     }
                     let mut lval = q.insert_fields.pop().unwrap();
                     lval.push(String::from(token));
@@ -283,7 +338,9 @@ impl Parser for SQLParser {
                 tokens::Step::insertValuesCommaOrClosingParens =>{
                     if token != "," && token != ")" {
                          //TODO: throw proper error code
-                         return (q, ast::ErrorCode::ParseError);
+                         return (q, ast::ErrorCode::ParseError(
+                             String::from("at INSERT INTO: expected comma or closing parens")
+                         ));
                     }
                     if token == "," {
                         step = tokens::Step::insertValues;
@@ -292,14 +349,20 @@ impl Parser for SQLParser {
                     let last = q.insert_fields.pop().unwrap();
                     if last.len() < q.fields.len(){
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);                        
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at INSERT INTO: value count does not match field count")
+                        )
+                        );                        
                     }
                     step = tokens::Step::insertValuesCommaBeforeOpeningParens;
                 }
                 tokens::Step::insertValuesCommaBeforeOpeningParens =>{
                     if token != "," {
                         //TODO: throw proper error code
-                        return (q, ast::ErrorCode::ParseError);   
+                        return (q, ast::ErrorCode::ParseError(
+                            String::from("at INSERT INTO: expected comma")
+                    )
+                        );   
                     }
                     step = tokens::Step::insertValuesOpeningParens;
                 }
