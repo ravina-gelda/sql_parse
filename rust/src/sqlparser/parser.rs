@@ -33,14 +33,12 @@ impl  SQLParser {
         let tokens = tokenizer.get_tokens(String::from(query));
         let mut updateNextField : &str = ""; 
         let  mut step: tokens::Step = tokens::Step::stepType;
-
         if !tokens.is_ok() {
             return (q, ast::ErrorCode::TokenizationError(String::from("Unable to parse input query")), step)
         }
         let tokens_vec = tokens.unwrap_or(vec![]);
         if tokens_vec.len() == 0 {
             return (q, ast::ErrorCode::TokenizationError(String::from("Input query cannot be empty")), step)
-
         } 
         for token in tokens_vec.iter().peekable(){
             println!("{}", token);
@@ -69,7 +67,6 @@ impl  SQLParser {
                     }
                     else {
                         return (q,ast::ErrorCode::ParseError(String::from("Invalid query type")), step)
-
                     
                     }
                     
@@ -280,7 +277,6 @@ impl  SQLParser {
                     if token.len() != 1 && String::from("(").eq_ignore_ascii_case(&token[..]) {
                         return (q, ast::ErrorCode::ParseError(
                             String::from("at INSERT INTO: expected (")
-
                         ), step);
                     }
                     step = tokens::Step::insertFields;
@@ -394,22 +390,17 @@ impl  SQLParser {
         }
         if q.query_type == ast::QueryType::INSERT && q.insert_fields.len() == 0 {
             return ast::ErrorCode::ParseError(String::from("at INSERT INTO: need atleast one row to insert"))
-
         }
         if q.query_type == ast::QueryType::INSERT {
             for i in q.insert_fields.iter() {
                 if i.len() != q.fields.len() {
-
                     return ast::ErrorCode::ParseError(String::from("aat INSERT INTO: value count doesn't match field count"))
-
-
                 }
             }
         }
         ast::ErrorCode::None
        
     }
-
 }
 impl Parser for SQLParser {
     fn parse(&self, query: &str)-> (ast::Query, ast:: ErrorCode) {

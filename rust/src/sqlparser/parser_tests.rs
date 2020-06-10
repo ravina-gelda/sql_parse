@@ -194,10 +194,10 @@ fn test_simple_where_and_success(){
         operand_1_is_field : true,
         operand_2_is_field : false
     }
-
     
     ]) 
 }
+#[test]
 fn test_simple_where_star_success(){
     time_test!();
     let p = parser::SQLParser::new();
@@ -282,8 +282,6 @@ fn test_update_success_multiple_and(){
         operand_1_is_field : true,
         operand_2_is_field : false}]);
 }
-
-
 #[test]
 fn test_delete_success(){
     time_test!();
@@ -379,7 +377,6 @@ fn test_selec_without_fields(){
     assert!(error_code == ast::ErrorCode::ParseError(String::from("at SELECT: expected field to select")));
     
 }
-
 #[test]
 fn test_selec_without_fields_comma(){
     time_test!();
@@ -537,7 +534,6 @@ fn empty_insert_4(){
     assert!(error_code == ast::ErrorCode::ParseError(String::from("at INSERT INTO: need atleast one row to insert")));
     
 }
-
 #[test]
 
 fn empty_insert_5(){
@@ -549,7 +545,6 @@ fn empty_insert_5(){
     assert!(error_code == ast::ErrorCode::ParseError(String::from("aat INSERT INTO: value count doesn't match field count")));
     
 }
-
 #[test]
 
 fn empty_insert_6(){
@@ -560,11 +555,3 @@ fn empty_insert_6(){
     assert!(error_code == ast::ErrorCode::ParseError(String::from("at INSERT INTO: expected at least one field to insert")));
     
 }
-
-
-
-
-
-
-
-
