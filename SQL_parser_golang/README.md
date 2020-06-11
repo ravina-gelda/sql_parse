@@ -32,7 +32,7 @@ C:\Users\Gopher\go\src\hello> go run hello.go
 * Test the test cases with the command: 
 ** set the path of command line to SQL_parser_golang/parser and run the below command:
 ``` go test -v ```
-## Golang 
+## Golang SQL Parser Implementation
 ## Examples of DML commands  in SQL Server are
 * SELECT – This SQL DML command select records or data from a table
 
