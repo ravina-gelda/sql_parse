@@ -9,9 +9,10 @@ import (
    // "runtime"
 
 )
+// https://stackoverflow.com/questions/24487943/invoking-struct-function-gives-cannot-refer-to-unexported-field-or-method
+//https://golang.org/pkg/go/types/#Array
 
-type Parser struct {
-	
+type Parser struct {	
 	sql             string
 	step            step
 	query           query.Query

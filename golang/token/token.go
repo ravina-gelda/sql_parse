@@ -12,10 +12,7 @@ import (
 type Tokenizer struct {
 	I               int
 	Sql             string
-	//step            step
-	//query           query.Query
-	//Err             error
-	//nextUpdateField string
+	
 }
 var identifiers = []string{
 	"(", ")", ">=", "<=", "!=", ",", "=", ">", "<", "SELECT", "INSERT INTO", "VALUES", "UPDATE", "DELETE FROM",
