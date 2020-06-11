@@ -26,9 +26,9 @@ C:\Users\Gopher\go\src\hello> go run hello.go
 ** output:
 ```hello, world```
 
-## Execution details of the SQL_parser_golang
+## Execution details of the sqlparse/golang
 * Download the repository
-* Setup the path for the folder SQL_parser_golang and run SQL_parser_main.go with the command below:
+* Setup the path for the folder golang and run SQL_parser_main.go with the command below:
 ``` go run SQL_parser_main.go ```
 * Test the test cases with the command: 
 ** set the path of command line to SQL_parser_golang/parser and run the below command:
