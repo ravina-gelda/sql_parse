@@ -6,13 +6,12 @@ import (
 	"testing"
 	
     "query"
-//for output file
- //   "io/ioutil"
-//	"log"
-//	"os"
-  //  "text/template"
+
 	
 )
+
+//https://medium.com/rungo/unit-testing-made-easy-in-go-25077669318
+//https://gobyexample.com/testing
 
 type testCase struct {
 	Name     string
@@ -424,11 +423,9 @@ func TestSQL(t *testing.T) {
 			}
 			if tc.Err != nil || err != nil {
                 t.Errorf("got %v, want %+#v", tc.Err, actual)
-				//require.Equal(t, tc.Err, err, "Unexpected error")
+				 
 			}
-			//if len(actual) > 0 {
-				//require.Equal(t, tc.Expected, actual[0], "Query didn't match expectation")
-			//}
+			 
 			if tc.Err != nil {
 				output.ErrorExamples = append(output.ErrorExamples, tc)
 			} else {
@@ -436,20 +433,6 @@ func TestSQL(t *testing.T) {
 			}
 		})
 	}
-	//createReadme(output)
+	 
 }
 
-/*func createReadme(out output) {
-	content, err := ioutil.ReadFile("README.template")
-	if err != nil {
-		log.Fatal(err)
-	}
-	t := template.Must(template.New("").Parse(string(content)))
-	f, err := os.Create("README.md")
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := t.Execute(f, out); err != nil {
-		log.Fatal(err)
-	}
-}*/
