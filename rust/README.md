@@ -5,4 +5,5 @@ https:://rust-lang.org/learn/get-started
 post this under the rust folder you can use the commands
 1. cargo build --release # to build the project
 2. cargo run #to run main.rs
+3. To run the test cases, use the command cargo test. 
 
