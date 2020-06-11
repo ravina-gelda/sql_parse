@@ -1,10 +1,5 @@
 
-# excution detail
-## Downlod the folder
-## Copy the contents of new_sql_parser folder in your go path in the system
-## go run parser.go
-## to change sql query just change the sql variable in the main function in parser.go
-# sql_parse
+# Requirements
 
 ## Golang installation steps: https://golang.org/doc/install
  * Dowload Go from : https://golang.org/dl/
@@ -29,6 +24,14 @@ C:\Users\Gopher\go\src\hello> go run hello.go
 ```
 ** output:
 ```hello, world```
+
+## Execution details of the SQL_parser_golang
+* Download the repository
+* Setup the path for the folder SQL_parser_golang and run SQL_parser_main.go with the command below:
+``` go run SQL_parser_main.go ```
+* Test the test cases with the command: 
+** set the path of command line to SQL_parser_golang/parser and run the below command:
+``` go test -v ```
 ## Golang 
 ## Examples of DML commands  in SQL Server are
 * SELECT – This SQL DML command select records or data from a table
